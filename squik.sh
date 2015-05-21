@@ -2,7 +2,7 @@
 
 ####
 #
-# TODO: grep TABLES from output
+# TODO: dump command, cookies support
 #		clear screen stuff
 ####
 
@@ -21,13 +21,13 @@
 #ANONMSG="OFF"
 #ANON=""
 #USER=$(whoami)
-DOMAIN="hackit.gehaxelt.in"
+#DOMAIN="hackit.gehaxelt.in"
 
 URL="NONE"
 ANONMSG="OFF"
 ANON=""
 USER=$(whoami)
-#DOMAIN="NONE"
+DOMAIN="NONE"
 DB="NONE"
 
 TMP=""
@@ -155,7 +155,7 @@ case $CMD in
 		else 
 		echo "attack"
 		echo $ARG
-			#sqlmap -o $ANON -u $URL --tables -D $DB #attack string
+			sqlmap -o $ANON -u $URL --tables -D $DB #attack string
 			TMP=$(cat /home/$USER/.sqlmap/output/$DOMAIN/log | grep -oP '(?<=\| ).*(?= \|)' | sort | uniq)
 			TABLECNT="TABLES [$(echo $TMP | wc -w)]:"
 		
