@@ -1,0 +1,2 @@
+# squik
+sqlmap quick
