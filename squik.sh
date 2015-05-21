@@ -3,7 +3,6 @@
 ####
 #
 # TODO: grep TABLES from output
-#		strip http:// or https:// from URL
 #		clear screen stuff
 ####
 
@@ -15,20 +14,25 @@
 #echo "#Author: Schaiger David                                   #"
 #echo "###########################################################"
 
-#URL="hackit.gehaxelt.in/sqli/level1.php?id=1"
+
+
+
+#URL="http://hackit.gehaxelt.in/sqli/level1.php?id=1"
 #ANONMSG="OFF"
 #ANON=""
 #USER=$(whoami)
-#DOMAIN="hackit.gehaxelt.in"
+DOMAIN="hackit.gehaxelt.in"
 
 URL="NONE"
 ANONMSG="OFF"
 ANON=""
 USER=$(whoami)
-DOMAIN="NONE"
+#DOMAIN="NONE"
+DB="NONE"
 
 TMP=""
 DBCNT=""
+TABLECNT=""
 
 #font colors
 #RED='\033[0;31m' 
@@ -43,7 +47,8 @@ URLCOLOR=$RED
 ANONCOLOR=$RED
 DOMAINCOLOR=$RED
 DBSCOLOR=$RED
-
+DBCOLOR=$RED
+TABLECOLOR=$RED
 
 
 while true
@@ -54,6 +59,8 @@ echo -ne "${DOMAINCOLOR}Domain:\t\t$DOMAIN${NC}\n"
 echo -ne "${URLCOLOR}Target:\t\t$URL${NC}\n"
 echo -ne "${ANONCOLOR}Anonymous:\t$ANONMSG${NC}\n"
 echo -ne "\n${DBSCOLOR}$DBCNT\t${DBARRAY[*]}${NC}\n"
+echo -ne "${DBCOLOR}DB:\t\t$DB${NC}\n"
+echo -ne "${TABLECOLOR}$TABLECNT\t${TABLEARRAY[*]}${NC}\n"
 
 echo -ne "\nsq> " 
 read CMD ARG
@@ -68,7 +75,22 @@ case $CMD in
 		else
 		URL=$ARG
 		URLCOLOR=$GREEN
-		DOMAIN=$(echo $URL | grep -oP '^[^\/]*')
+		DOMAIN=$URL
+		
+		echo "$DOMAIN" | grep -F "http://"
+		if [ $? -eq 0 ];then
+		echo "http"
+			DOMAIN="${URL#http://}"
+		fi
+		
+		echo "$DOMAIN" | grep -F "https://"
+		if [ $? -eq 0 ];then
+		echo "https"
+			DOMAIN="${URL#https://}"
+		fi
+		
+		DOMAIN="$(echo $DOMAIN | grep -oP '^[^\/]*')"
+		
 		DOMAINCOLOR=$GREEN
 		unset DBARRAY
 		unset DBCNT
@@ -107,52 +129,64 @@ case $CMD in
 		DBSCOLOR=$GREEN
 		echo -ne "\n<continue>"
 		read -n 1 -s
+		continue
+		;;
+	"db")
+		if [ -z "$ARG" ]; then
+			echo -ne "\n${RED}[!] usage: db <DB NAME>${NC}"
+			echo -ne "\n\n<continue>"
+			read -n 1 -s
+		else 
+			DB=$ARG
+			DBCOLOR=$GREEN
+		fi
+		;;
+		
+		#	target hackit.gehaxelt.in/sqli/level1.php?id=1
+
+		
+	"tables")
+		if [ "$DB" == "NONE" ]; then
+		echo "fail"
+			echo -ne "\n${RED}[!] set DB first: db <DB NAME>${NC}\n"
+			echo -ne "\n\n<continue>"
+			read -n 1 -s
+			continue
+		else 
+		echo "attack"
+		echo $ARG
+			#sqlmap -o $ANON -u $URL --tables -D $DB #attack string
+			TMP=$(cat /home/$USER/.sqlmap/output/$DOMAIN/log | grep -oP '(?<=\| ).*(?= \|)' | sort | uniq)
+			TABLECNT="TABLES [$(echo $TMP | wc -w)]:"
+		
+			CNT=0
+			for i in ${TMP//'\n'/};
+			do
+				TABLEARRAY[CNT]=$i;
+				((CNT++));
+			done
+			TABLECOLOR=$GREEN
+		fi	
 		;;
 	"exit")
 		exit 0
 		;;
 	"?"|"help")
-		echo -e "\nset target URL:  target <URL>"
+		echo -e "\n\nset target URL:  target <URL>"
 		echo "set anonymous:   anon <on|off>"
 		echo "start scan:      run"
+		echo "set DB:          db <DB NAME>"
+		echo "get tables:      tables"
+		echo "set table:       tables <TABLE NAME>"
+		echo "dump data:       dump"
 		echo "quit squik:      exit"
-		echo ""
-		echo -n "<continue>"
+		echo -ne "\n<continue>"
 		read -n 1 -s
 		;;
 esac
 
 done
-###########################
-#
-# BASIC enumeration / anon
-#
-###########################
 
-
-
-
-###########################
-#
-# DB enumeration
-#
-###########################
-echo ""
-echo "--------------------squik"
-echo "[1] enumerate DB: "
-echo "[2] exit"
-
-read CHOICE
-
-if [ $CHOICE == 1 ]; then
-echo ""
-echo -n "paste target DB: "
-read DB
-elif [ $CHOICE == 2 ]; then
-exit 0
-fi
-
-sqlmap -o $ANON -u $URL --tables -D $DB
 
 ###########################
 #
