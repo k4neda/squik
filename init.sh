@@ -6,43 +6,70 @@ ORANGE="\E[30;43m\033[30m"
 GREEN="\E[30;42m\033[30m"
 FONTGREEN="\033[0;32m"
 
-CONNECTION="0"
+NETWORK="0"
 SQLMAP="0"
 NMAP="0"
 TOR="0"
 
+TARGET=""
+IP=""
+OS=""
 
 function main(){
-	echo -e  "\033[2J\033[0;1H"
-	echo -e  "\t\t     ___       __        _______   ";
-	echo -e  "\t\t     | |      /  \\      |  _____| ";
-	echo -e  "\t\t     | |     / /\ \\     | |_____  ";
-	echo -e  "\t\t     | |    / /__\ \\    |_____  | ";
-	echo -en "\t\t     | |   / _____  \\    _____| | "; initstatus $CONNECTION internet
-	echo -en "\t\t     | |  / /      \ \\  |       | "; initstatus $SQLMAP sqlmap
-	echo -en "\t\t     ############################  "; initstatus $NMAP nmap
-	echo -en "\t\t        increased attack speed     "; initstatus $TOR tor
-	echo -e  ""
-	echo -e  "${FONTGREEN}----------------------------------------------------------------------${NC}"
-	echo -e  "Target: <URL>"
-	echo -e  ""
-	echo -e  ""
+	
+	while true
+	do
+	
+		echo -e   "\033[2J\033[0;1H"
+		echo -e   "\t\t     ___       __        _______   "; 
+		echo -en  "\t\t     | |      /  \\      |  _____| "; initstatus $NETWORK network
+		echo -e   "\t\t     | |     / /\ \\     | |_____  "; 
+		echo -en  "\t\t     | |    / /__\ \\    |_____  | "; initstatus $SQLMAP sqlmap
+		echo -e   "\t\t     | |   / _____  \\    _____| | "; 
+		echo -en  "\t\t     | |  / /      \ \\  |       | "; initstatus $NMAP nmap
+		echo -e   "\t\t     ############################  "; 
+		echo -en  "\t\t        increased attack speed     "; initstatus $TOR tor
+		echo -e   ""
+		echo -e   "${FONTGREEN}----------------------------------------------------------------------${NC}"
+		echo -e   "Target: $TARGET"
+		echo -e   "IP    : $IP"
+		echo -e   "OS    : $OS"
+		echo -e   ""
 
+		if [ -z "$TARGET" ]; then
+			echo -ne "Target URL:  "
+			read INPUT
+			TARGET="$INPUT"
+			continue
+		elif [ -z "$IP" ]; then
+			IP=$(ping -q -c 3 -w 2 $TARGET | grep -oP '(?:[0-9]{1,3}\.){3}[0-9]{1,3}')
+			continue
+		elif [ -z "$OS" ]; then
+			OS=$(nmap -Pn -p 80 -O $TARGET | grep "OS")
+			echo $OS
+		fi
+
+		echo -en "IAS --> "
+		read INPUT
+		
+		
+
+	done
 	
 }
 
 function init(){
 		
 	#ping 8.8.8.8
-	ping -q -c 3 8.8.8.8
-	if [ $? == "0" ]; then
+	ping -q -c 3 -w 2 8.8.8.8
+	if [ $? == "1" ]; then
 		echo -e "\033[2J\033[0;1H"
-		echo -e "${GREEN}[!]${NC} connection ok"
-		CONNECTION="1"
+		echo -e "${GREEN}[!]${NC} network ok"
+		NETWORK="1"
 	else
 		echo -e "\033[2J\033[0;1H"	
 		echo -e "${RED}[critical]${NC} connection failed"
-		CONNECTION="0"
+		NETWORK="0"
 	fi
 	
 	#check nmap
@@ -59,7 +86,7 @@ function init(){
 	else
 		which tor 1>/dev/null
 		if [ $? == "0" ]; then
-			echo -e "${ORANGE}[warning]${NC} tor detected but not running"
+			echo -e "${ORANGE}[warning]${NC} tor not running"
 			TOR="2"
 		else
 			echo -e "${RED}[critical]${NC} tor not found"
@@ -85,12 +112,20 @@ function bincheck()
 
 function initstatus()
 {
-	if [ "$1" == "0" ]; then
-		echo -e "\t[${RED}  ${NC}] $2"
+	if [ $1 == "0" ]; then
+		if [ "$2" == "network" ]; then
+			echo -e "\t[${RED}  ${NC}] $2 [check your network settings!]"
+		elif [ "$2" == "nmap" ]; then
+			echo -e "\t[${RED}  ${NC}] $2 [sudo apt-get install nmap]"
+		elif [ "$2" == "sqlmap" ]; then
+			echo -e "\t[${RED}  ${NC}] $2 [sudo apt-get install sqlmap]"
+		elif [ "$2" == "tor" ]; then
+			echo -e "\t[${RED}  ${NC}] $2 [sudo apt-get install tor]"
+		fi
 	elif [ $1 == "1" ]; then
 		echo -e "\t[${GREEN}  ${NC}] $2"
 	elif [ $1 == "2" ]; then
-		echo -e "\t	[${ORANGE}  ${NC}] $2"
+		echo -e "	[${ORANGE}  ${NC}] $2 stopped [sudo service tor start]"
 	fi	
 	
 }
