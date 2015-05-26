@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+# FIX long URL (reposition), check PING
+
 NC='\033[0m'
 RED="\E[0;41m\033[1m"
 ORANGE="\E[30;43m\033[30m"
@@ -20,35 +23,41 @@ function main(){
 	while true
 	do
 	
-		echo -e   "\033[2J\033[0;1H"
-		echo -e   "\t\t     ___       __        _______   "; 
-		echo -en  "\t\t     | |      /  \\      |  _____| "; initstatus $NETWORK network
-		echo -e   "\t\t     | |     / /\ \\     | |_____  "; 
-		echo -en  "\t\t     | |    / /__\ \\    |_____  | "; initstatus $SQLMAP sqlmap
-		echo -e   "\t\t     | |   / _____  \\    _____| | "; 
-		echo -en  "\t\t     | |  / /      \ \\  |       | "; initstatus $NMAP nmap
-		echo -e   "\t\t     ############################  "; 
-		echo -en  "\t\t        increased attack speed     "; initstatus $TOR tor
-		echo -e   ""
-		echo -e   "${FONTGREEN}----------------------------------------------------------------------${NC}"
-		echo -e   "Target: $TARGET"
-		echo -e   "IP    : $IP"
-		echo -e   "OS    : $OS"
-		echo -e   ""
-
 		if [ -z "$TARGET" ]; then
+			echo -e   "\033[2J\033[0;1H"
+			echo -e   "\t\t\t        ___       __        _______   "; 
+			echo -e   "\t\t\t        | |      /  \\      |  _____| \t"
+			echo -e   "\t\t\t        | |     / /\ \\     | |_____  "; 
+			echo -e   "\t\t\t        | |    / /__\ \\    |_____  | \t"
+			echo -e   "\t\t\t        | |   / _____  \\    _____| | "; 
+			echo -e   "\t\t\t        | |  / /      \ \\  |       | \t"
+			echo -e   "\t\t\t        ############################  "; 
+			echo -e   "\t\t\t           increased attack speed     \t"
+			echo -e   ""
+			echo -e   "${FONTGREEN}------------------------------------------------------------------------------------${NC}"
+		
+			echo -e   ""
 			echo -ne "Target URL:  "
 			read INPUT
 			TARGET="$INPUT"
-			continue
-		elif [ -z "$IP" ]; then
-			IP=$(ping -q -c 3 -w 2 $TARGET | grep -oP '(?:[0-9]{1,3}\.){3}[0-9]{1,3}')
-			continue
-		elif [ -z "$OS" ]; then
-			OS=$(nmap -Pn -p 80 -O $TARGET | grep "OS")
-			echo $OS
 		fi
-
+	
+		echo -e   "\033[2J\033[0;1H"
+		echo -e   "\t\t\t        ___       __        _______   "; 
+		echo -en "[${GREEN}  ${NC}] Target: $TARGET"; echo -en  "\t\t| |      /  \\      |  _____| \t"; initstatus $NETWORK network
+		echo -e   "\t\t\t        | |     / /\ \\     | |_____  "; 
+		basics ip; echo -en  "\t\t| |    / /__\ \\    |_____  | \t"; initstatus $SQLMAP sqlmap
+		echo -e   "\t\t\t        | |   / _____  \\    _____| | "; 
+		echo -en  "\t\t\t        | |  / /      \ \\  |       | \t"; initstatus $NMAP nmap
+		echo -e   "\t\t\t        ############################  "; 
+		echo -en  "\t\t\t           increased attack speed     \t"; initstatus $TOR tor
+		echo -e   ""
+		echo -e   "${FONTGREEN}------------------------------------------------------------------------------------${NC}"
+		
+		echo -e   ""
+		
+		
+		
 		echo -en "IAS --> "
 		read INPUT
 		
@@ -107,6 +116,18 @@ function bincheck()
 		fi
 	else
 		echo -e "${RED}[critical]${NC} $1 not found"
+	fi
+}
+
+function basics()
+{
+	if [ $1 == "ip" ] && [ -z "$IP" ]; then
+		IP=$(ping -q -c 3 -w 2 $IP | grep -oP '(?:[0-9]{1,3}\.){3}[0-9]{1,3}')
+		echo -en "[${GREEN}  ${NC}] IP: $IP"
+	
+	elif [ $1 == "os" ] && [ -z "$OS" ]; then
+		OS=$(nmap -Pn -p 80 -O $TARGET | grep -oP '(?<=OS details: ).*(?=)')
+		echo -en "[${GREEN}  ${NC}] OS: $OS"
 	fi
 }
 
